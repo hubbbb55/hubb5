@@ -1,9 +1,8 @@
--- Ensure the path exists or create it safely
+-- Ensure the path exists and add a text label on top
 local workspace = game:GetService("Workspace")
 
--- Function to get or create workspace.VER.Highlight
-local function getOrCreateHighlight()
-	-- Check if VER folder/model exists in workspace, create if missing
+local function setupHighlightWithLabel()
+	-- 1. Get or create workspace.VER
 	local verFolder = workspace:FindFirstChild("VER")
 	if not verFolder then
 		verFolder = Instance.new("Folder")
@@ -11,24 +10,61 @@ local function getOrCreateHighlight()
 		verFolder.Parent = workspace
 	end
 
-	-- Check if Highlight exists inside VER, create if missing
+	-- 2. Get or create the Highlight instance
 	local highlight = verFolder:FindFirstChildOfClass("Highlight")
 	if not highlight then
 		highlight = Instance.new("Highlight")
 		highlight.Name = "Highlight"
-		highlight.Adornee = verFolder -- Adjust adornee as needed
 		highlight.Parent = verFolder
 	end
 
-	return highlight
+	-- 3. Get or create a Part to attach the BillboardGui to (if VER is a Folder)
+	-- BillboardGuis require a BasePart, Attachment, or Model to attach to in the 3D world.
+	local targetPart = verFolder:FindFirstChild("TargetPart")
+	if not targetPart then
+		targetPart = Instance.new("Part")
+		targetPart.Name = "TargetPart"
+		targetPart.Size = Vector3.new(4, 4, 4)
+		targetPart.Transparency = 1 -- Make it invisible
+		targetPart.Anchored = true
+		targetPart.CanCollide = false
+		targetPart.Parent = verFolder
+	end
+
+	-- Link the Highlight to the part
+	highlight.Adornee = targetPart
+
+	-- 4. Get or create the BillboardGui for the name "Mono"
+	local billboardGui = targetPart:FindFirstChild("NameTag")
+	if not billboardGui then
+		billboardGui = Instance.new("BillboardGui")
+		billboardGui.Name = "NameTag"
+		billboardGui.Size = UDim2.new(0, 100, 0, 50)
+		billboardGui.StudsOffset = Vector3.new(0, 3, 0) -- Position above the object
+		billboardGui.AlwaysOnTop = true
+		billboardGui.Parent = targetPart
+
+		-- Create the TextLabel inside the BillboardGui
+		local textLabel = Instance.new("TextLabel")
+		textLabel.Name = "NameLabel"
+		textLabel.Size = UDim2.new(1, 0, 1, 0)
+		textLabel.BackgroundTransparency = 1
+		textLabel.Text = "Mono"
+		textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		textLabel.TextScaled = true
+		textLabel.Font = Enum.Font.SourceSansBold
+		textLabel.Parent = billboardGui
+	end
+
+	return highlight, targetPart
 end
 
--- Execute and configure the highlight
-local highlightInstance = getOrCreateHighlight()
+-- Execute the setup
+local highlightInstance, partInstance = setupHighlightWithLabel()
 
--- Example property adjustments
+-- Configure highlight colors
 highlightInstance.FillColor = Color3.fromRGB(0, 170, 255)
 highlightInstance.OutlineColor = Color3.fromRGB(255, 255, 255)
 highlightInstance.FillTransparency = 0.5
 
-print("Highlight path ready:", highlightInstance:GetFullName())
+print("Successfully set up 'Mono' label and highlight at:", partInstance:GetFullName())
